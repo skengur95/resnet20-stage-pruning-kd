@@ -174,14 +174,14 @@ ResNet 은 shortcut 연결 때문에 한 스테이지 안의 블록 출력 채�
 ```
 resnet20-stage-pruning-kd/
 ├── notebooks/
-│   ├── stage_pruning_kd.ipynb      ← 기준 노트북 (영문)
-│   └── stage_pruning_kd.ko.ipynb   ← 한국어판 (코드 동일)
+│   ├── 01_stage_pruning_kd.ipynb      ← 기준 노트북 (영문)
+│   └── 01_stage_pruning_kd.ko.ipynb   ← 한국어판 (코드 동일)
 ├── results/        run*.csv (원본), summary.csv (평균)
 ├── figures/        pareto_macs.png, pareto_params.png
 └── requirements.txt
 ```
 
-**Colab**: `notebooks/stage_pruning_kd.ipynb` 열기 → 런타임 유형 T4 GPU → 셀 1~3, 7~9 실행 →
+**Colab**: `notebooks/01_stage_pruning_kd.ipynb` 열기 → 런타임 유형 T4 GPU → 셀 1~3, 7~9 실행 →
 셀 10 을 `RUN_ID = 1, 2, …` 로 반복 → 셀 11, 12.
 결과는 구글 드라이브 `MyDrive/resnet20-stage-pruning-kd/` 에 저장됩니다.
 
