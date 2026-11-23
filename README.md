@@ -6,9 +6,9 @@
 
 ## TL;DR
 
-- The combination that prunes the early stage (A) more, (0.4, 0.3, 0.2), has **18% fewer MACs than uniform 20% pruning, at about −0.9%p accuracy** (KD, mean of 5 runs: acc_kd 0.814 vs 0.823)
-- At the same compute, **pruning the early stage (A) more favors accuracy, while pruning the late stage (C) more favors parameter reduction** (an accuracy–size trade-off)
-- **KD beat FT (fine-tuning) in 64 of 65 comparisons**, and KD's gain over FT grew with the pruning level (+0.9 → +2.5%p)
+- The combination that prunes the early stage (A) more, (0.4, 0.3, 0.2), has **18% fewer MACs than uniform 20% pruning, at about −0.9pp accuracy** (KD, mean of 5 runs: acc_kd 0.814 vs 0.823)
+- MACs are spread evenly across the three stages while 75% of the parameters sit in C, so at the same compute **pruning A more favors accuracy, while pruning C more favors parameter reduction**
+- **KD beat FT in 64 of 65 comparisons**, but its gain (+1–2.5 pp) was usually too small to offset the accuracy lost by stepping down to the next smaller group (mostly 2.6–4.3 pp)
 
 ## Contents
 
@@ -112,7 +112,7 @@ Each tuple is `(rA, rB, rC)` = the pruning ratio of stages A, B and C.
 
 ### Part 2 — After recovery training (mean ± std over 5 runs)
 
-| Group | Shape | (rA, rB, rC) | MACs (M) | Params | acc_ft | acc_kd | kd_gain (%p) |
+| Group | Shape | (rA, rB, rC) | MACs (M) | Params | acc_ft | acc_kd | kd_gain (pp) |
 |---|---|---|---|---|---|---|---|
 | baseline | MetaPruner 20% | all layers 0.2 | 24.89 | 170,772 | 0.814 ± 0.004 | 0.823 ± 0.003 | +0.88 |
 | baseline | stage 20% | (0.2, 0.2, 0.2) | 27.04 | 175,362 | 0.820 ± 0.004 | 0.828 ± 0.004 | +0.85 |
@@ -139,7 +139,7 @@ The dashed line is the Pareto front for KD (points with no more accurate alterna
 1. **The sensitivity ranking flips with the pruning ratio.** (Part 1, no recovery training)
    - At ratios ≤ 0.2, A is the least sensitive (0.2: A 0.796 > C 0.767 > B 0.734)
    - At ratios ≥ 0.25, A is the most sensitive (0.25: A 0.586 < B 0.674 < C 0.722)
-   - A has a cliff: going from 3 to 4 pruned channels drops accuracy 0.796 → 0.586, **21%p for a single channel**
+   - A has a cliff: going from 3 to 4 pruned channels drops accuracy 0.796 → 0.586, **21pp for a single channel**
    - → Don't conclude "where is sensitive" from a single ratio
 
 2. **Accuracy right after pruning (or sensitivity before recovery) is not a reliable predictor of the ranking after recovery.**
@@ -158,16 +158,16 @@ The dashed line is the Pareto front for KD (points with no more accurate alterna
      → ~15M middle (0.3, 0.5, 0.3) → ~20M uniform (0.3, 0.3, 0.3) → ~20M decreasing (0.4, 0.3, 0.2)
 
 4. **KD almost always beat FT.**
-   - KD > FT in **64** of 65 comparisons (5 runs × 13 combinations); the only exception was stage 20% (0.2, 0.2, 0.2) in run 3 (−0.45%p)
+   - KD > FT in **64** of 65 comparisons (5 runs × 13 combinations); the only exception was stage 20% (0.2, 0.2, 0.2) in run 3 (−0.45pp)
    - Individual differences are small, but the direction is consistent, so KD can be considered better in this experimental setting
      (ResNet-20 · CIFAR-10 subset of 10,000 training images · 3 epochs · SGD lr 1e-2 · KD T = 4, α = 0.5)
 
-5. **KD's gain in %p grows with pruning, but the share of the remaining gap it closes stays similar.**
-   - kd_gain: +0.9%p at the baseline → +2.1–2.5%p at ~11M
+5. **KD's gain in pp grows with pruning, but the share of the remaining gap it closes stays similar.**
+   - kd_gain: +0.9pp at the baseline → +2.1–2.5pp at ~11M
    - Gap closed = kd_gain ÷ (original − FT): mostly 20–33%, and even lower at ~11M (about 20%)
-   - → This can be read as the %p growing simply because there is a larger gap to close
+   - → This can be read as the pp growing simply because there is a larger gap to close
 
-6. **KD does not make up for the loss of a group pruned one step further.**
+6. **KD cannot make up for the accuracy lost by stepping down one more group.**
    - For the same shape, we compare "one group smaller + KD" with "one group larger + FT":
 
      | Shape | Smaller group + KD | Larger group + FT | KD higher? |
@@ -180,17 +180,17 @@ The dashed line is the Pareto front for KD (points with no more accurate alterna
      | increasing | ~11M (0.4, 0.5, 0.5): 0.748 | ~15M (0.3, 0.4, 0.5): 0.742 | ✓ |
      | decreasing | ~11M (0.5, 0.5, 0.4): 0.767 | ~15M (0.5, 0.4, 0.3): 0.772 | ✗ |
 
-   - Holds in only 2 of 7 pairs. In those 2 pairs, the FT loss between groups was small (middle 0.7%p, increasing 1.9%p)
-   - → KD's gain (+1–2.5%p) is generally smaller than the loss from compressing one group further (mostly 2.6–4.3%p)
+   - Holds in only 2 of 7 pairs. In those 2 pairs, the FT loss between groups was small (middle 0.7pp, increasing 1.9pp)
+   - → KD's gain (+1–2.5pp) is generally smaller than the loss from compressing one group further (mostly 2.6–4.3pp)
 
 7. **Against the baseline: less compute, but consistently slightly lower accuracy.**
-   - ~20M decreasing (0.4, 0.3, 0.2) vs. MetaPruner 20%: MACs −18%, params −7%, KD accuracy −0.87%p
-   - Per-run difference: −0.55, −0.30, −1.05, −1.65, −0.80%p → **lower in all 5 runs**
-   - → "Same accuracy" is hard to claim; the accurate statement is "traded about 0.9%p accuracy for 18% fewer MACs"
+   - ~20M decreasing (0.4, 0.3, 0.2) vs. MetaPruner 20%: MACs −18%, params −7%, KD accuracy −0.87pp
+   - Per-run difference: −0.55, −0.30, −1.05, −1.65, −0.80pp → **lower in all 5 runs**
+   - → "Same accuracy" is hard to claim; the accurate statement is "traded about 0.9pp accuracy for 18% fewer MACs"
 
 ## Limitations
 
-- **Eval set of 2,000 images**: one image = 0.05%p; standard error near 0.8 accuracy ≈ ±0.9%p. Repeating runs reduces training randomness only, not this error
+- **Eval set of 2,000 images**: one image = 0.05pp; standard error near 0.8 accuracy ≈ ±0.9pp. Repeating runs reduces training randomness only, not this error
 - **Short training**: 10,000 training images, 3 epochs. With longer training the FT–KD gap may shrink
 - **Fixed KD setting**: T = 4 and α = 0.5 were fixed, not tuned. KD's advantage holds for this setting
 - **MACs differ within a group**: MACs are not exactly equal within a group (~15M: 14.92M–16.96M, up to about 14% apart)
