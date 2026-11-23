@@ -37,14 +37,16 @@ KD loss: `α·CE + (1−α)·T²·KL(teacher ‖ student)` — a mix of matching
 
 Because of the shortcut connections, the output channels of all blocks in a stage are tied together and cannot be pruned independently.
 
-| Stage | Scope | Channels | Resolution | Params per conv | MACs per conv |
+| Stage | Scope | Channels | Resolution | Params | MACs |
 |---|---|---|---|---|---|
-| A | stem · layer1 | 16 | 32×32 | 16×16×3×3 = 2,304 | 2,304 × 32×32 ≈ 2.36M |
-| B | layer2 | 32 | 16×16 | 32×32×3×3 = 9,216 | 9,216 × 16×16 ≈ 2.36M |
-| C | layer3 (→ fc) | 64 | 8×8 | 64×64×3×3 = 36,864 | 36,864 × 8×8 ≈ 2.36M |
+| A | stem · layer1 | 16 | 32×32 | 14,480 (5.3%) | 14.84M (36.0%) |
+| B | layer2 | 32 | 16×16 | 51,648 (19.0%) | 13.22M (32.1%) |
+| C | layer3 | 64 | 8×8 | 205,696 (75.5%) | 13.16M (31.9%) |
+| Head | pool · fc | — | — | 650 (0.2%) | 0.005M (0.0%) |
+| **Total** | | | | **272,474** | **41.24M** |
 
-For a conv, params = input channels × output channels × 3×3, and MACs = params × output resolution (width × height).
-Each time the channel count doubles, the resolution drops to 1/4, so **the MACs of a single conv are almost the same in every stage, while the parameters grow 4× per stage.**
+For a single conv, params = input channels × output channels × 3×3, and MACs = params × output resolution (width × height).
+Each time the channel count doubles, the resolution drops to 1/4, so **the MACs of each stage are almost the same, while the parameters grow about 4× per stage.**
 This structure is key to interpreting the results.
 
 ### Part 1 — Stage sensitivity (no recovery training)
