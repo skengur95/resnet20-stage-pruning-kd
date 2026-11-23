@@ -1,0 +1,8 @@
+# Python 3.10+ / runs on CPU or GPU
+torch>=2.1
+torch-pruning==1.6.0
+numpy
+pandas
+matplotlib
+opencv-python
+ipykernel
