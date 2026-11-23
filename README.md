@@ -37,12 +37,13 @@ KD loss: `α·CE + (1−α)·T²·KL(teacher ‖ student)` — a mix of matching
 
 Because of the shortcut connections, the output channels of all blocks in a stage are tied together and cannot be pruned independently.
 
-| Stage | Scope | Channels | Resolution |
-|---|---|---|---|
-| A | stem · layer1 | 16 | 32×32 |
-| B | layer2 | 32 | 16×16 |
-| C | layer3 (→ fc) | 64 | 8×8 |
+| Stage | Scope | Channels | Resolution | Params per conv | MACs per conv |
+|---|---|---|---|---|---|
+| A | stem · layer1 | 16 | 32×32 | 16×16×3×3 = 2,304 | 2,304 × 32×32 ≈ 2.36M |
+| B | layer2 | 32 | 16×16 | 32×32×3×3 = 9,216 | 9,216 × 16×16 ≈ 2.36M |
+| C | layer3 (→ fc) | 64 | 8×8 | 64×64×3×3 = 36,864 | 36,864 × 8×8 ≈ 2.36M |
 
+For a conv, params = input channels × output channels × 3×3, and MACs = params × output resolution (width × height).
 Each time the channel count doubles, the resolution drops to 1/4, so **the MACs of a single conv are almost the same in every stage, while the parameters grow 4× per stage.**
 This structure is key to interpreting the results.
 
@@ -125,8 +126,9 @@ The dashed line is the Pareto front for KD (points with no more accurate alterna
    - ~20M decreasing scored 0.101 right after pruning (essentially random), the lowest in its tier, yet reached 0.814 after KD, the highest
    - → Compare candidates by their accuracy after recovery training
 
-3. **Prune early (A) to cut compute (MACs), prune late (C) to cut size (params).**
-   - MACs are similar across stages, while parameters are concentrated in C (see the table in Method)
+3. **When reducing the same amount of MACs, pruning early (A) is better for accuracy; to reduce params, pruning late (C) is better.**
+   - MACs are similar across stages, but parameters are concentrated in C (see the table in Method)
+   - So pruning A reduces MACs while reducing params (capacity) only slightly, whereas pruning C reduces params substantially
    - decreasing (more at A) ranked first in KD accuracy within its tier in 4 of 5 runs at ~20M and in all 5 runs at ~11M
    - At ~15M, middle ranked first (0.792) but with 2M more MACs; decreasing (0.788) was second
    - increasing (more at C) had the lowest accuracy at ~20M and ~15M but the fewest params (~15M: 78,524, −71% vs. the original)
