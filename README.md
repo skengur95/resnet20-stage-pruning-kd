@@ -10,6 +10,20 @@
 - At the same compute, **pruning the early stage (A) more favors accuracy, while pruning the late stage (C) more favors parameter reduction** (an accuracy–size trade-off)
 - **KD beat fine-tuning (FT) in 64 of 65 comparisons**, and its gain over FT grew with the pruning level (+0.9 → +2.5%p)
 
+## Contents
+
+1. [Questions](#questions)
+2. [Setup](#setup)
+3. [Method](#method)
+4. [Fair comparison](#fair-comparison)
+5. [Design: 125 → 83 → 11](#design-125--83--11)
+6. [Results](#results)
+7. [Insights](#insights)
+8. [Limitations](#limitations)
+9. [Future work](#future-work)
+10. [Reproduction](#reproduction)
+11. [Credits](#credits)
+
 ## Questions
 
 1. Which of ResNet-20's three stages (A, B, C) is most sensitive to pruning?
